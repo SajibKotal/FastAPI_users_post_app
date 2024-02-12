@@ -23,10 +23,7 @@ app = FastAPI()
 
 
     
-class UpdatePost(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
-    published: Optional[bool] = None
+
    
     
     
@@ -54,4 +51,4 @@ def test_post(db:Session = Depends(get_db)):
     return {"data": posts}
 
 
-###############nnn
+###############

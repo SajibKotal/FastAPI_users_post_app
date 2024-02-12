@@ -3,6 +3,7 @@ from .. import models,schemas
 from sqlalchemy.orm import Session
 from ..database import get_db
 from typing import Optional,List
+from .. import models, schemas, oauth2
 
 
 router = APIRouter(
@@ -20,7 +21,7 @@ def get_post(db:Session = Depends(get_db)):
 
 
 @router.get("/{id}",response_model=schemas.Post)
-def get_post(id:str,db:Session = Depends(get_db)):       #response:Response
+def get_post(id:int,db:Session = Depends(get_db)):       #response:Response
     # cursor.execute("""SELECT * FROM posts WHERE id= %s""",(str(id),))
     # post= cursor.fetchone()
     post=db.query(models.Post).filter(models.Post.id == id).first()
@@ -58,7 +59,7 @@ def get_post(published: Optional[str]=None):
 #     return {"data":new_post}
 
 @router.post('/create_posts',status_code=status.HTTP_201_CREATED,response_model=schemas.Post)
-def create_posts(post:schemas.PostCreate, db:Session = Depends(get_db)):
+def create_posts(post:schemas.PostCreate, db:Session = Depends(get_db),user_id: int = Depends(oauth2.get_current_user)):
     # cursor.execute("INSERT INTO posts(title, content,published) VALUES(%s, %s,%s) RETURNING *", (post.title, post.content,post.published))
     # new_post = cursor.fetchone()
     # conn.commit()
@@ -125,29 +126,62 @@ def update_post(id:int,updatet_post:schemas.PostCreate,db:Session = Depends(get_
 
 
 # @router.patch("/update_post/{id}")
-# def update_post(id: str, post: UpdatePost):
+# def update_post(id: int, updated_post: schemas.UpdatePost,db:Session = Depends(get_db)):
 #     # Check if any field is provided for update
-#     if post.title is None and post.content is None and post.published is None:
+#     if updated_post.title is None and updated_post.content is None and updated_postt.published is None:
 #         return {"data": "No fields provided for update"}
 
 #     # Construct the SET clause based on provided fields
 #     set_clause = []
 #     values = []
 
-#     if post.title is not None:
+#     if updated_post.title is not None:
 #         set_clause.append("title = %s")
-#         values.append(post.title)
-#     if post.content is not None:
+#         values.append(updated_post.title)
+#     if updated_post.content is not None:
 #         set_clause.append("content = %s")
-#         values.append(post.content)
-#     if post.published is not None:
+#         values.append(updated_post.content)
+#     if updated_post.published is not None:
 #         set_clause.append("published = %s")
-#         values.append(post.published)
+#         values.append(updated_post.published)
 
 #     # Construct and execute the UPDATE query
-#     update_query = f"""UPDATE posts SET {', '.join(set_clause)} WHERE id = %s RETURNING *"""
-#     cursor.execute(update_query, (*values, id))
-#     updated_post = cursor.fetchone()
-#     conn.commit()
+#     # update_query = f"""UPDATE posts SET {', '.join(set_clause)} WHERE id = %s RETURNING *"""
+#     # cursor.execute(update_query, (*values, id))
+#     # updated_post = cursor.fetchone()
+#     # conn.commit()
+#     post_query =db.query(models.Post).filter(models.Post.id == str(id))
+#     post = post_query.first()
+#     if post==None:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+#                             detail=f"post with id:{id} was not found")
+#     post_query.update(updated_post.dict(),synchronize_session=False)
+#     db.commit()
 
-#     return {"data": "Update successful", "updated_post": updated_post}
+#     return {"data": "Update successful"}
+@router.patch("/update_post/{id}")
+# @router.put("/update_post/{id}", response_model=schemas.Post)
+def update_post(id: int, update_post: schemas.UpdatePost, db: Session = Depends(get_db)):
+    # Fetch the post from the database
+    post = db.query(models.Post).filter(models.Post.id == id).first()
+
+    # Check if the post with the given id exists
+    if post is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Post with id:{id} was not found"
+        )
+
+    # Update only the specified fields
+    if update_post.title:
+        post.title = update_post.title
+    if update_post.content:
+        post.content = update_post.content
+    if update_post.published is not None:
+        post.published = update_post.published
+
+    # Commit the changes to the database
+    db.commit()
+
+    # Return the updated post
+    return post

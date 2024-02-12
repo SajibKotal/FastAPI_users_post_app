@@ -2,7 +2,7 @@ from fastapi import FastAPI,Response,status,HTTPException, Depends, APIRouter
 from .. import models,schemas,utils
 from sqlalchemy.orm import Session
 from ..database import get_db
-
+from typing import Optional,List
 
 router = APIRouter(
     prefix="/users",
@@ -30,4 +30,13 @@ def get_user(id: int, db: Session = Depends(get_db), ):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"User with id: {id} does not exist")
 
+    return user
+
+
+@router.get("/",response_model=List[schemas.UserOut])
+def get_user(db:Session = Depends(get_db)):
+    # cursor.execute("""SELECT * FROM posts""")
+    # post= cursor.fetchall()
+    user=db.query(models.User).all()
+    # print(post)
     return user
