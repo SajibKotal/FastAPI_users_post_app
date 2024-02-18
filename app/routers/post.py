@@ -7,11 +7,11 @@ from .. import models, schemas, oauth2
 
 
 router = APIRouter(
-    prefix="/get_post",
+    prefix="/post",
     tags=["Posts"]
 )
 
-@router.get("/",response_model=List[schemas.Post])
+@router.get("/get_post",response_model=List[schemas.Post])
 def get_post(db:Session = Depends(get_db),current_user: int = Depends(oauth2.get_current_user)):
     # cursor.execute("""SELECT * FROM posts""")
     # post= cursor.fetchall()
@@ -20,7 +20,7 @@ def get_post(db:Session = Depends(get_db),current_user: int = Depends(oauth2.get
     return post
 
 
-@router.get("/{id}",response_model=schemas.Post)
+@router.get("/get_post/{id}",response_model=schemas.Post)
 def get_post(id:int,db:Session = Depends(get_db)):       #response:Response
     # cursor.execute("""SELECT * FROM posts WHERE id= %s""",(str(id),))
     # post= cursor.fetchone()
